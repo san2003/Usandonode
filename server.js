@@ -1,31 +1,44 @@
 const express = require("express");
+require("./db");
+const serv = require("./models/ToDo");
 const app = express();
 const PORT = 3000;
 
 //middleware (meio termo entre a API e o client) para entender json em requisições
 app.use(express.json());
 
-// Array imitando bd
-let tarefas = [];
-let idAtual = 1;
-
 app.get("/", (requisisao, resposta) => {
   resposta.status(200).send("Bem-vidno à API!");
 });
 
 app.get("/tarefas", (req, res) => {
-    res.json(tarefas)
-
+  res.json(tarefas);
 });
 
-app.post("/tarefas", (req, res) => {
-  const { titulo } = req.body;
-  if (!titulo) {
-    return res.status(400).json({ erro: "Titulo obrigatório título" });
+app.post("/tarefas", async (req, res) => {
+  const { descricao } = req.body;
+  if (!descricao) {
+    return res.status(400).json({ erro: "Preencha a descrição" });
   }
-  const novaTarefa = { id: idAtual++, titulo };
-  tarefas.push(novaTarefa);
-  res.status(201).json(novaTarefa);
+  try {
+    const novaTarefa = new serv({ descricao });
+    await novaTarefa.save();
+    res.status(201).json(novaTarefa);
+  } catch (error) {}
+  res.status(500).json({ erro: "Erro ao incluir tarefa" });
+});
+
+app.delete("/tarefas/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const tarefa = await serv.findByIdAndDelete(id);
+    if (!tarefa) {
+      return res.status(404).json({ erro: "Tarefa não encontrada!" });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ erro: "Erro ao remover tarefa: " + error.message });
+  }
 });
 
 app.listen(PORT, () => {
