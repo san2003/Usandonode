@@ -1,3 +1,6 @@
+//rodar: npm intall
+//       npm run dev
+
 const express = require("express");
 require("./config/db");
 const tarefasRoutes = require("./routes/servRoutes");
